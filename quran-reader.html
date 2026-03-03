@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quran Reader | المصحف الإلكتروني</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Scheherazade New', serif;
+            background-color: #f9f7f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .quran-container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            text-align: center;
+            max-width: 700px;
+            width: 90%;
+            border: 1px solid #e0dacc;
+        }
+        .surah-name {
+            color: #1a472a;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .ayah-text {
+            font-family: 'Amiri Quran', serif; /* خط مخصص للرسم العثماني */
+            font-size: 2.2rem;
+            line-height: 4rem;
+            margin: 30px 0;
+            color: #222;
+            word-wrap: break-word;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        button {
+            flex: 1;
+            background-color: #1a472a;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: 0.2s;
+        }
+        button:hover:not(:disabled) { background-color: #2d6a4f; }
+        button:disabled { background-color: #ccc; }
+        .info { color: #888; margin-bottom: 10px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<div class="quran-container">
+    <div id="surah-info" class="surah-name">جاري تحميل كلام الله...</div>
+    <div id="ayah-display" class="ayah-text">...</div>
+    
+    <div class="info">آية رقم <span id="ayah-number">1</span> من 6236</div>
+
+    <div class="controls">
+        <button id="prev-btn" onclick="changeAyah(-1)">← الآية السابقة</button>
+        <button id="next-btn" onclick="changeAyah(1)">الآية التالية →</button>
+    </div>
+</div>
+
+<script>
+    let currentAyah = parseInt(localStorage.getItem('lastAyah')) || 1;
+
+    async function fetchAyah(number) {
+        const display = document.getElementById('ayah-display');
+        const info = document.getElementById('surah-info');
+        
+        display.style.opacity = "0.5";
+        
+        try {
+            // استخدام نسخة quran-uthmani لضمان الرسم العثماني الكامل والدقيق
+            const response = await fetch(`https://api.alquran.cloud/v1/ayah/${number}/quran-uthmani`);
+            const data = await response.json();
+            
+            if (data.code === 200) {
+                const ayah = data.data;
+                display.innerText = ayah.text;
+                display.style.opacity = "1";
+                info.innerText = `سورة ${ayah.surah.name}`;
+                document.getElementById('ayah-number').innerText = number;
+                localStorage.setItem('lastAyah', number);
+            }
+        } catch (error) {
+            display.innerText = "تأكد من اتصالك بالإنترنت لظهور الآيات.";
+        }
+
+        document.getElementById('prev-btn').disabled = (number <= 1);
+        document.getElementById('next-btn').disabled = (number >= 6236);
+    }
+
+    function changeAyah(step) {
+        currentAyah += step;
+        fetchAyah(currentAyah);
+    }
+
+    fetchAyah(currentAyah);
+</script>
+
+</body>
+</html>
