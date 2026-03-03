@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quran Reader | المصحف الإلكتروني</title>
+    <title>Quran Reader | المصحف الإلكتروني الصوتي</title>
     <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -34,17 +34,19 @@
             padding-bottom: 10px;
         }
         .ayah-text {
-            font-family: 'Amiri Quran', serif; /* خط مخصص للرسم العثماني */
+            font-family: 'Amiri Quran', serif;
             font-size: 2.2rem;
-            line-height: 4rem;
+            line-height: 4.5rem;
             margin: 30px 0;
             color: #222;
-            word-wrap: break-word;
+        }
+        .audio-section {
+            margin: 20px 0;
         }
         .controls {
             display: flex;
             justify-content: space-between;
-            gap: 20px;
+            gap: 15px;
             margin-top: 30px;
         }
         button {
@@ -52,43 +54,61 @@
             background-color: #1a472a;
             color: white;
             border: none;
-            padding: 15px;
+            padding: 12px;
             border-radius: 10px;
             cursor: pointer;
-            font-size: 1.1rem;
+            font-size: 1rem;
             transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
         button:hover:not(:disabled) { background-color: #2d6a4f; }
         button:disabled { background-color: #ccc; }
-        .info { color: #888; margin-bottom: 10px; font-size: 0.9rem; }
+        .audio-btn {
+            background-color: #c19a6b; /* لون خشبي مريح للزر الصوتي */
+        }
+        .audio-btn:hover { background-color: #a67c52; }
+        .info { color: #888; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="quran-container">
-    <div id="surah-info" class="surah-name">جاري تحميل كلام الله...</div>
+    <div id="surah-info" class="surah-name">جاري التحميل...</div>
     <div id="ayah-display" class="ayah-text">...</div>
     
-    <div class="info">آية رقم <span id="ayah-number">1</span> من 6236</div>
+    <div class="info">آية رقم <span id="ayah-number">1</span></div>
+
+    <div class="audio-section">
+        <audio id="quran-audio" onended="onAudioEnded()"></audio>
+        <button id="play-btn" class="audio-btn" onclick="toggleAudio()">
+            <span id="play-icon">▶️</span> استماع للآية
+        </button>
+    </div>
 
     <div class="controls">
-        <button id="prev-btn" onclick="changeAyah(-1)">← الآية السابقة</button>
-        <button id="next-btn" onclick="changeAyah(1)">الآية التالية →</button>
+        <button id="prev-btn" onclick="changeAyah(-1)">← السابقة</button>
+        <button id="next-btn" onclick="changeAyah(1)">التالية →</button>
     </div>
 </div>
 
 <script>
     let currentAyah = parseInt(localStorage.getItem('lastAyah')) || 1;
+    let isPlaying = false;
 
     async function fetchAyah(number) {
         const display = document.getElementById('ayah-display');
         const info = document.getElementById('surah-info');
+        const audio = document.getElementById('quran-audio');
         
         display.style.opacity = "0.5";
-        
+        stopAudio(); // إيقاف أي صوت يعمل عند الانتقال لآية جديدة
+
         try {
-            // استخدام نسخة quran-uthmani لضمان الرسم العثماني الكامل والدقيق
-            const response = await fetch(`https://api.alquran.cloud/v1/ayah/${number}/quran-uthmani`);
+            // جلب النص بالرسم العثماني + رابط الصوت للقارئ (مشاري العفاسي كمثال)
+            const response = await fetch(`https://api.alquran.cloud/v1/ayah/${number}/ar.alafasy`);
             const data = await response.json();
             
             if (data.code === 200) {
@@ -97,14 +117,45 @@
                 display.style.opacity = "1";
                 info.innerText = `سورة ${ayah.surah.name}`;
                 document.getElementById('ayah-number').innerText = number;
+                
+                // تحديث رابط الصوت
+                audio.src = ayah.audio;
+                
                 localStorage.setItem('lastAyah', number);
             }
         } catch (error) {
-            display.innerText = "تأكد من اتصالك بالإنترنت لظهور الآيات.";
+            display.innerText = "تأكد من اتصالك بالإنترنت.";
         }
 
         document.getElementById('prev-btn').disabled = (number <= 1);
         document.getElementById('next-btn').disabled = (number >= 6236);
+    }
+
+    function toggleAudio() {
+        const audio = document.getElementById('quran-audio');
+        const icon = document.getElementById('play-icon');
+        const btnText = document.getElementById('play-btn');
+
+        if (isPlaying) {
+            stopAudio();
+        } else {
+            audio.play();
+            isPlaying = true;
+            icon.innerText = "⏸️";
+            btnText.innerHTML = `<span id="play-icon">⏸️</span> إيقاف مؤقت`;
+        }
+    }
+
+    function stopAudio() {
+        const audio = document.getElementById('quran-audio');
+        audio.pause();
+        isPlaying = false;
+        document.getElementById('play-icon').innerText = "▶️";
+        document.getElementById('play-btn').innerHTML = `<span id="play-icon">▶️</span> استماع للآية`;
+    }
+
+    function onAudioEnded() {
+        stopAudio();
     }
 
     function changeAyah(step) {
