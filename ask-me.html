@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="notranslate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لدي سؤال | المساعد الذكي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --main-color: #1b4332; --bg-chat: #f4f7f6; --user-msg: #dcf8c6; --ai-msg: #ffffff; --link-color: #2d6a4f; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg-chat); height: 100vh; display: flex; flex-direction: column; }
+        
+        .chat-header { background: var(--main-color); color: white; padding: 15px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .message { max-width: 85%; padding: 12px 18px; border-radius: 18px; font-size: 1rem; line-height: 1.6; position: relative; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .user { align-self: flex-start; background: var(--user-msg); border-bottom-left-radius: 2px; }
+        .ai { align-self: flex-end; background: var(--ai-msg); border-bottom-right-radius: 2px; border: 1px solid #ddd; }
+        
+        /* تنسيق الروابط داخل الدردشة */
+        .chat-link { display: inline-block; margin-top: 10px; padding: 8px 15px; background: var(--link-color); color: white; text-decoration: none; border-radius: 20px; font-size: 0.85rem; font-weight: bold; transition: 0.3s; }
+        .chat-link:hover { background: #1b4332; transform: scale(1.05); }
+
+        .voice-btn { cursor: pointer; border: none; background: #f0f0f0; border-radius: 50%; width: 35px; height: 35px; margin-top: 10px; display: flex; align-items: center; justify-content: center; }
+
+        .input-area { background: white; padding: 15px; display: flex; gap: 10px; border-top: 1px solid #ddd; }
+        input { flex: 1; padding: 12px 20px; border: 1px solid #eee; border-radius: 25px; outline: none; background: #f9f9f9; font-family: inherit; }
+        button#send-btn { background: var(--main-color); color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; }
+
+        .back-btn { position: fixed; bottom: 80px; right: 20px; background: var(--main-color); color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body>
+
+    <div class="chat-header">
+        <h2>نور الهداية 🤖</h2>
+        <p style="font-size: 0.75rem; opacity: 0.9;">أنا هنا لأرشدك داخل الموقع وأجيبك دينياً</p>
+    </div>
+
+    <div id="chat-window">
+        <div class="message ai">السلام عليكم! أنا مرشدك الذكي. يمكنني مساعدتك في الوصول لأي قسم أو البحث عن معلومة دينية. ماذا تريد أن تفعل الآن؟</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="user-input" placeholder="اكتب سؤالك أو القسم الذي تبحث عنه..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+
+    <a href="index.html" class="back-btn">🏠</a>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const userInput = document.getElementById('user-input');
+
+        function processAI(query) {
+            query = query.trim().toLowerCase();
+            
+            // 1. الترحيب والاستجابة الإنسانية
+            if (query.length <= 3 || query.match(/^(مرحبا|اهلا|سلام|السلام|يا مرحبا|كيف حالك|هلو)/)) {
+                return {
+                    text: "أهلاً بك! أنا في خدمتك. يمكنك أن تطلب مني 'البحث في القرآن' أو 'معرفة وقت الصلاة' أو حتى 'فحص منتج'. ماذا تفضل؟",
+                    link: null
+                };
+            }
+
+            // 2. الدخول للاقسام والبحث (Navigation Logic)
+            if (query.includes("قرآن") || query.includes("مصحف") || query.includes("سورة") || query.includes("آية")) {
+                return {
+                    text: "بالتأكيد! يمكنك قراءة القرآن الكريم والبحث عن السور وتكبير الخط من خلال قسم المصحف الإلكتروني لدينا.",
+                    link: "quran-reader.html",
+                    linkText: "📖 الذهاب للمصحف الشريف"
+                };
+            }
+
+            if (query.includes("حديث") || query.includes("سنة") || query.includes("بخاري") || query.includes("مسلم") || query.includes("ابحث عن حديث")) {
+                return {
+                    text: "يمكنك البحث في آلاف الأحاديث النبوية والتأكد من صحتها عبر قسم 'طريق السنة'. سأقوم بنقلك لهناك الآن.",
+                    link: "sunna-path.html",
+                    linkText: "📜 البحث في السنة النبوية"
+                };
+            }
+
+            if (query.includes("صلاة") || query.includes("وقت") || query.includes("اذان") || query.includes("متى الأذان")) {
+                return {
+                    text: "لمعرفة مواقيت الصلاة الدقيقة حسب موقعك الحالي، يرجى الانتقال لصفحة المواقيت.",
+                    link: "prayer-times.html",
+                    linkText: "🕌 مواقيت الصلاة"
+                };
+            }
+
+            if (query.includes("حرام") || query.includes("حلال") || query.includes("خنزير") || query.includes("فحص") || query.includes("منتج")) {
+                return {
+                    text: "لفحص المنتجات والتأكد من خلوها من مشتقات الخنزير، يرجى استخدام الفاحص الذكي الخاص بنا.",
+                    link: "halal-checker.html",
+                    linkText: "🔍 فتح فاحص الحلال"
+                };
+            }
+
+            if (query.includes("رئيسية") || query.includes("بداية") || query.includes("خروج")) {
+                return {
+                    text: "حاضر، سأعيدك الآن إلى الصفحة الرئيسية للموقع لتشاهد جميع الخيارات.",
+                    link: "index.html",
+                    linkText: "🏠 العودة للرئيسية"
+                };
+            }
+
+            // 3. فلتر المحتوى الديني العام
+            const religiousKeywords = ['الله', 'نبي', 'رسول', 'دين', 'اسلام', 'فقه', 'تفسير', 'رمضان', 'حج', 'زكاة', 'صوم', 'جنة', 'نار'];
+            const isReligious = religiousKeywords.some(word => query.includes(word));
+
+            if (isReligious) {
+                return {
+                    text: "هذا سؤال ديني قيم. أنصحك بالبحث عنه داخل أقسام السنة أو القرآن في موقعنا لضمان الحصول على أدق الإجابات الشرعية.",
+                    link: "index.html",
+                    linkText: "🔎 ابحث في الموقع"
+                };
+            }
+
+            return {
+                text: "أعتذر منك، أنا مبرمج لمساعدتك في الأمور الدينية والتنقل داخل أقسام الموقع فقط. هل تريدني أن أوجهك لصفحة معينة؟",
+                link: null
+            };
+        }
+
+        function sendMessage() {
+            const text = userInput.value.trim();
+            if(!text) return;
+            addMessage(text, 'user');
+            userInput.value = '';
+            setTimeout(() => {
+                const responseObj = processAI(text);
+                addMessage(responseObj.text, 'ai', responseObj.link, responseObj.linkText);
+            }, 500);
+        }
+
+        function addMessage(text, sender, link = null, linkText = "") {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${sender}`;
+            msgDiv.innerText = text;
+
+            if(sender === 'ai') {
+                // إضافة رابط إذا وجد
+                if(link) {
+                    const a = document.createElement('a');
+                    a.href = link;
+                    a.className = 'chat-link';
+                    a.innerText = linkText;
+                    msgDiv.appendChild(document.createElement('br'));
+                    msgDiv.appendChild(a);
+                }
+
+                // إضافة زر الصوت
+                const btn = document.createElement('button');
+                btn.className = 'voice-btn';
+                btn.innerHTML = '🔊';
+                btn.onclick = () => speak(text);
+                msgDiv.appendChild(btn);
+            }
+
+            chatWindow.appendChild(msgDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function speak(text) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ar-SA';
+            window.speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>
