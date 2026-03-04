@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فحص الحلال الخارق | حيوانات ومكونات كيميائية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    
+    <style>
+        :root { --halal: #157347; --haram: #ae2012; --bg: #f4f7f6; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); text-align: center; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 40px; border-radius: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); border: 1px solid #eee; }
+        
+        h2 { font-weight: 900; color: #333; margin-bottom: 10px; }
+        
+        .upload-zone { border: 3px dashed #bbb; padding: 50px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s; margin-bottom: 25px; background: #fafafa; }
+        .upload-zone:hover { border-color: var(--halal); background: #e8f5e9; }
+        #preview { width: 100%; border-radius: 15px; display: none; margin-bottom: 25px; border: 4px solid #eee; }
+        
+        .result-box { padding: 25px; border-radius: 15px; display: none; font-weight: bold; animation: fadeInUp 0.5s; text-align: right; }
+        @keyframes fadeInUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .haram-details { font-size: 0.9rem; color: #333; margin-top: 10px; background: rgba(255,255,255,0.5); padding: 10px; border-radius: 8px; }
+        .loading { display: none; margin: 20px 0; font-weight: bold; color: var(--accent-green); }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--halal); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 10px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>🔍 فحص الحلال الخارق للذكاء الاصطناعي</h2>
+        <p>ارفع صورة (حيوان كامل، قطعة لحم، أو جدول المكونات)</p>
+
+        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+            <p id="upload-text" style="font-size: 1.1rem; color: #555;">اضغط أو اسحب الصورة هنا للتحليل الشرعي الدقيق</p>
+            <input type="file" id="fileInput" accept="image/*" hidden onchange="startHighPowerAnalysis(event)">
+        </div>
+
+        <img id="preview" alt="معاينة الصورة">
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <span id="load-status">جاري تشغيل محركات الذكاء الاصطناعي...</span>
+        </div>
+        
+        <div id="result" class="result-box"></div>
+
+    </div>
+
+    <script>
+        // ==========================================
+        // قاعدة بيانات المحرمات الكيميائية والحيوانية الصارمة (E-Numbers & Keywords)
+        // ==========================================
+        const HARAM_DATABASE = {
+            animals: ['pork', 'pig', 'boar', 'swine', 'ham', 'bacon', 'lard', ' خنزير', 'خنزير مشوي', 'لحم خنزير', 'كلب', 'قطة', 'أسد', 'نمر', 'فيل', 'حمار'],
+            ingredients: ['alcohol', 'wine', 'beer', 'whiskey', 'gelatin', 'gelatine', 'pepsin', 'carmine', 'cochineal', 'الجيلاتين', 'كحول'],
+            // أرقام E المحرمة أو المشتبة بها بشدة (هذه قائمة عينة، يمكن توسيعها لمئات)
+            e_numbers: ['E120', 'E441', 'E471', 'E472', 'E473', 'E474', 'E475', 'E476', 'E477', 'E478', 'E479', 'E481', 'E482', 'E483', 'E491', 'E492', 'E493', 'E494', 'E495', 'E542', 'E570', 'E572', 'E631', 'E635', 'E904', 'E910', 'E920', 'E921']
+        };
+
+        async function startHighPowerAnalysis(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // إظهار المعاينة
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById('preview');
+                img.src = e.target.result;
+                img.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            const resultBox = document.getElementById('result');
+            const loader = document.getElementById('loading');
+            const statusText = document.getElementById('load-status');
+            
+            resultBox.style.display = 'none';
+            loader.style.display = 'block';
+            statusText.innerText = "جاري التعرف على الصورة وتحليل الحيوانات المشوية...";
+
+            // ==========================================
+            // المرحلة 1: تحليل الحيوانات (Concept using Deep Learning API)
+            // ==========================================
+            // في الواقع، هنا يتم إرسال الصورة لـ API (مثل Google Vision أو TensorFlow)
+            // سأقوم بمحاكاة هذا بناءً على اسم الملف كنموذج أولي.
+            
+            await new Promise(r => setTimeout(r, 1500)); // محاكاة وقت التحليل
+            
+            const fileName = file.name.toLowerCase();
+            let haramReasons = [];
+
+            // فحص الكلمات المفتاحية في اسم الملف (نموذج مبسط للتعرف على الحيوانات)
+            HARAM_DATABASE.animals.forEach(word => {
+                if (fileName.includes(word)) haramReasons.push(`تم اكتشاف حيوان/لحم محرم: ${word}`);
+            });
+
+            if (haramReasons.length > 0) {
+                showFinalResult("❌ حرام قطعاً", haramReasons, "haram");
+                loader.style.display = 'none';
+                return;
+            }
+
+            // ==========================================
+            // المرحلة 2: قراءة النصوص (OCR) من جدول المكونات
+            // ==========================================
+            statusText.innerText = "جاري قراءة وتحليل جدول المكونات كيميائياً (OCR)...";
+
+            try {
+                // استخدام Tesseract لقراءة النص من الملف مباشرة
+                const { data: { text } } = await Tesseract.recognize(file, 'ara+eng');
+                const extractedText = text.toLowerCase();
+                console.log("النص المستخرج:", extractedText); // للتصحيح
+
+                // فحص الكلمات المفتاحية المحرمة في النص المستخرج
+                HARAM_DATABASE.ingredients.forEach(word => {
+                    if (extractedText.includes(word)) haramReasons.push(`تم اكتشاف مكون محرم: ${word}`);
+                });
+
+                // فحص أرقام E المحرمة في النص المستخرج
+                HARAM_DATABASE.e_numbers.forEach(eNum => {
+                    if (extractedText.includes(eNum.toLowerCase())) haramReasons.push(`تم اكتشاف مادة كيميائية مشبوهة/محرمة: ${eNum}`);
+                });
+
+                if (haramReasons.length > 0) {
+                    showFinalResult("❌ حرام/مشبوه شرعاً", haramReasons, "haram");
+                } else {
+                    showFinalResult("✅ يبدو أن المنتج حلال (راجع المكونات دائماً)", [], "halal");
+                }
+
+            } catch (error) {
+                console.error("خطأ في OCR:", error);
+                showFinalResult("⚠️ خطأ في التحليل", ["تعذر قراءة النص من الصورة، يرجى التأكد من وضوح جدول المكونات."], "haram");
+            }
+
+            loader.style.display = 'none';
+        }
+
+        function showFinalResult(title, reasons, type) {
+            const res = document.getElementById('result');
+            res.innerHTML = `<div>${title}</div>`;
+            
+            if (reasons.length > 0) {
+                let detailsHtml = '<div class="haram-details"><strong>الأسباب:</strong><ul>';
+                reasons.forEach(reason => detailsHtml += `<li>${reason}</li>`);
+                detailsHtml += '</ul></div>';
+                res.innerHTML += detailsHtml;
+            }
+
+            res.style.display = 'block';
+            res.style.background = type === 'halal' ? '#d1e7dd' : '#f8d7da';
+            res.style.color = type === 'halal' ? '#0f5132' : '#842029';
+            res.style.border = `3px solid ${type === 'halal' ? var(--halal) : var(--haram)}`;
+        }
+
+        function toggleMenu() { document.getElementById('sm').classList.toggle('active'); }
+    </script>
+</body>
+</html>

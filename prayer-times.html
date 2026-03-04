@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="notranslate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="google" content="notranslate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prayer Times | مواقيت الصلاة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --p-purple: #2d3436;
+            --main-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glass: rgba(255, 255, 255, 0.95);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #f0f2f5;
+            background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+            background-size: 20px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* رأس الصفحة الجمالي */
+        .hero-section {
+            width: 100%;
+            background: var(--main-gradient);
+            padding: 50px 20px;
+            text-align: center;
+            color: white;
+            border-bottom-left-radius: 40px;
+            border-bottom-right-radius: 40px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .next-prayer-info h2 { font-size: 1.2rem; font-weight: 400; margin-bottom: 10px; }
+        #timer { font-size: 4rem; font-weight: 800; letter-spacing: -2px; margin: 10px 0; }
+        #next-prayer-name { background: rgba(255,255,255,0.2); padding: 5px 20px; border-radius: 20px; font-weight: bold; }
+
+        /* حاوية المواعيد */
+        .times-grid {
+            width: 90%;
+            max-width: 450px;
+            margin: -40px auto 100px;
+            display: grid;
+            gap: 15px;
+        }
+
+        .time-card {
+            background: var(--glass);
+            padding: 20px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            transition: 0.3s;
+        }
+        .time-card.active { border: 2px solid #764ba2; background: #fff; transform: scale(1.02); }
+        .p-name { font-weight: 700; color: #444; display: flex; align-items: center; gap: 10px; }
+        .p-time { font-weight: 800; color: #764ba2; font-size: 1.2rem; }
+
+        .location-footer { margin-top: 20px; color: #fff; font-size: 0.85rem; opacity: 0.8; }
+
+        /* القائمة يمين تحت */
+        .menu-wrapper { position: fixed; bottom: 25px; right: 25px; z-index: 2000; display: flex; flex-direction: column; align-items: flex-end; }
+        .side-menu { background: white; width: 250px; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); margin-bottom: 15px; display: none; flex-direction: column; overflow: hidden; }
+        .side-menu.active { display: flex; }
+        .menu-link { padding: 15px 20px; color: #333; text-decoration: none; border-bottom: 1px solid #f0f0f0; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        .menu-toggle-btn { background: #764ba2; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 28px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+
+        @media (max-width: 500px) { #timer { font-size: 3rem; } }
+    </style>
+</head>
+<body>
+
+    <div class="hero-section">
+        <div class="next-prayer-info">
+            <h2 id="status-text">الوقت المتبقي لـ <span id="next-prayer-name">...</span></h2>
+            <div id="timer">00:00:00</div>
+            <div class="location-footer" id="city-name">جاري تحديد مدينتك تلقائياً...</div>
+        </div>
+    </div>
+
+    <div class="times-grid" id="prayer-list">
+        </div>
+
+    <div class="menu-wrapper">
+        <div id="side-menu" class="side-menu">
+            <div class="menu-link" onclick="downloadPage()">📥 تحميل الصفحة مجاناً</div>
+            <div class="menu-link" onclick="window.location.href='index.html'">🏠 الصفحة الرئيسية</div>
+            <div class="menu-link" onclick="openContact()">📧 التواصل والدعم</div>
+        </div>
+        <button class="menu-toggle-btn" onclick="toggleMenu()">☰</button>
+    </div>
+
+    <script>
+        const prayerNames = { Fajr: "الفجر", Dhuhr: "الظهر", Asr: "العصر", Maghrib: "المغرب", Isha: "العشاء" };
+        
+        async function getTimesByIP() {
+            try {
+                // الخطوة 1: معرفة المدينة والدولة عبر الـ IP دون طلب إذن
+                const locRes = await fetch('https://ipapi.co/json/');
+                const locData = await locRes.json();
+                const city = locData.city;
+                const country = locData.country_name;
+                document.getElementById('city-name').innerText = `المدينة: ${city} | ${country}`;
+
+                // الخطوة 2: جلب المواقيت لهذه المدينة
+                const prayerRes = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=${city}&country=${country}&method=4`);
+                const prayerData = await prayerRes.json();
+                const timings = prayerData.data.timings;
+
+                renderTimes(timings);
+                setupCountdown(timings);
+            } catch (error) {
+                document.getElementById('city-name').innerText = "حدث خطأ في جلب الموقع. يرجى المحاولة لاحقاً.";
+            }
+        }
+
+        function renderTimes(timings) {
+            const list = document.getElementById('prayer-list');
+            list.innerHTML = "";
+            ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"].forEach(p => {
+                list.innerHTML += `
+                    <div class="time-card" id="card-${p}">
+                        <div class="p-name">${prayerNames[p]}</div>
+                        <div class="p-time">${timings[p]}</div>
+                    </div>
+                `;
+            });
+        }
+
+        function setupCountdown(timings) {
+            const prayers = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+            
+            setInterval(() => {
+                const now = new Date();
+                let next = null;
+                let nextKey = "";
+
+                for (let p of prayers) {
+                    const [h, m] = timings[p].split(':');
+                    const pDate = new Date();
+                    pDate.setHours(h, m, 0);
+
+                    if (pDate > now) {
+                        next = pDate;
+                        nextKey = p;
+                        break;
+                    }
+                }
+
+                if (!next) { // إذا انتهت صلوات اليوم
+                    const [h, m] = timings["Fajr"].split(':');
+                    next = new Date();
+                    next.setDate(next.getDate() + 1);
+                    next.setHours(h, m, 0);
+                    nextKey = "Fajr";
+                }
+
+                document.getElementById('next-prayer-name').innerText = prayerNames[nextKey];
+                
+                // تمييز البطاقة النشطة
+                document.querySelectorAll('.time-card').forEach(c => c.classList.remove('active'));
+                document.getElementById(`card-${nextKey}`).classList.add('active');
+
+                const diff = next - now;
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                document.getElementById('timer').innerText = 
+                    `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function toggleMenu() { document.getElementById('side-menu').classList.toggle('active'); }
+        
+        function downloadPage() {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([document.documentElement.outerHTML], {type:'text/html'}));
+            a.download = 'prayer-times.html';
+            a.click();
+        }
+
+        function openContact() {
+            const msg = prompt("اكتب رسالتك:");
+            if(msg) window.location.href = `mailto:kintav@zohomail.eu?subject=Support&body=${msg}`;
+        }
+
+        getTimesByIP();
+    </script>
+</body>
+</html>
